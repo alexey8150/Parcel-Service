@@ -21,9 +21,6 @@ pytest = "*"
 httpx = "*"
 pytest-asyncio = "*"
 asgi-lifespan = "*"
-aresponses = "*"
-fakeredis = "*"
-fastapi-cache2 = {extras = ["redis"], version = "*"}
 aiocache = "*"
 aioredis = "*"
 
