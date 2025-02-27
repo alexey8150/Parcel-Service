@@ -24,14 +24,17 @@ class PackageTypeSummaryLogRepository(BaseMongoRepository):
             collection = self.model.get_motor_collection()
             for type_name, values in types.items():
                 today = datetime.combine(date.today(), datetime.min.time())
-                package_data = {
-                    "package_type": type_name,
-                    "date_log": today,
-                    "total_cost": values["total_cost"],
-                    "package_count": values["package_count"]
-                }
                 await collection.update_one(
                     {"package_type": type_name, "date_log": today},
-                    {"$set": package_data},
+                    {
+                        "$inc": {
+                            "total_cost": values["total_cost"],
+                            "package_count": values["package_count"]
+                        },
+                        "$setOnInsert": {
+                            "package_type": type_name,
+                            "date_log": today
+                        }
+                    },
                     upsert=True
                 )
