@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    container_name: app
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=mysql
+      - DB_NAME=${DB_NAME}
+      - DB_PASS=${DB_PASS}
+      - MONGO_HOST=mongodb
+      - MONGO_USER=${MONGO_USER}
+      - MONGO_PASS=${MONGO_PASS}
+    depends_on:
+      - mysql
+      - mongodb
+      - redis
+    networks:
+      - app_network
+
+  celery-worker:
+    build:
+      context: .
+    container_name: celery_worker
+    command: celery -A src.tasks.celery_app worker --loglevel=info
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=mysql
+      - DB_NAME=${DB_NAME}
+      - DB_PASS=${DB_PASS}
+      - MONGO_HOST=mongodb
+      - MONGO_USER=${MONGO_USER}
+      - MONGO_PASS=${MONGO_PASS}
+    depends_on:
+      - app
+      - redis
+      - mysql
+      - mongodb
+    networks:
+      - app_network
+
+  celery-beat:
+    build:
+      context: .
+    container_name: celery_beat
+    command: celery -A src.tasks.celery_app beat --loglevel=info
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=mysql
+      - DB_NAME=${DB_NAME}
+      - DB_PASS=${DB_PASS}
+      - MONGO_HOST=mongodb
+      - MONGO_USER=${MONGO_USER}
+      - MONGO_PASS=${MONGO_PASS}
+    depends_on:
+      - app
+      - redis
+      - mysql
+      - mongodb
+    networks:
+      - app_network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_NAME}
+      MYSQL_PASSWORD: ${DB_PASS}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongo_db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app_network
+
+volumes:
+  mysql_data:
+  mongo_data:
+
+networks:
+  app_network:
