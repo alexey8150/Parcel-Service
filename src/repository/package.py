@@ -18,8 +18,6 @@ class PackageTypeSummaryLogRepository(BaseMongoRepository):
 
     async def update_daily_sum(self, types: Dict[str, Any]):
         if types:
-            if not types:
-                return
 
             collection = self.model.get_motor_collection()
             for type_name, values in types.items():
